@@ -3,6 +3,9 @@ plugins {
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
 }
+
+apply from: 'gradle/check.gradle'
+
 import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
@@ -23,6 +26,9 @@ dependencies {
     provided "org.embulk:embulk-core:0.7.10"
 
     testCompile "junit:junit:4.+"
+    testCompile "org.embulk:embulk-standards:0.7.10"
+    testCompile "org.embulk:embulk-core:0.7.10:tests"
+    testCompile "org.mockito:mockito-core:1.9.5"
 }
 
 task classpath(type: Copy, dependsOn: ["jar"]) {
