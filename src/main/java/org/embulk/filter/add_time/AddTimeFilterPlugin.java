@@ -61,7 +61,7 @@ public class AddTimeFilterPlugin
         @ConfigDefault("\"sec\"")
         String getUnixTimestampUnit();
 
-        @Config("format")
+        @Config("timestamp_format")
         @ConfigDefault("\"%Y-%m-%d %H:%M:%S %z\"") // override default value
         Optional<String> getFormat();
 
@@ -89,7 +89,7 @@ public class AddTimeFilterPlugin
         @ConfigDefault("null")
         Optional<String> getTo();
 
-        @Config("format")
+        @Config("timestamp_format")
         @ConfigDefault("\"%Y-%m-%d %H:%M:%S %z\"") // override default value
         Optional<String> getFormat();
 

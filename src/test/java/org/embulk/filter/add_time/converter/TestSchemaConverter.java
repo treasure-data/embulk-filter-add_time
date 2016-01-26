@@ -255,7 +255,7 @@ public class TestSchemaConverter
             assertEquals(new Column(1, "time", Types.TIMESTAMP), outputSchema.getColumn(1));
         }
         {
-            ConfigSource conf = config.deepCopy().set("from_column", ImmutableMap.of("name", "c0", "format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+            ConfigSource conf = config.deepCopy().set("from_column", ImmutableMap.of("name", "c0", "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
             Schema inputSchema = schema("c0", Types.STRING);
             Schema outputSchema = new SchemaConverter(log, pluginTask(conf), inputSchema).toOutputSchema();
 
@@ -289,10 +289,10 @@ public class TestSchemaConverter
             assertEquals(inputSchema.getColumn(0), outputSchema.getColumn(0));
             assertEquals(new Column(1, "time", Types.TIMESTAMP), outputSchema.getColumn(1));
         }
-        { // specify 'format'
+        { // specify 'timestamp_format'
             ConfigSource conf = config.deepCopy()
                     .set("from_value", ImmutableMap.of("mode", "fixed_time", "value", "2016-01-01 10:10:10.000 UTC",
-                            "format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+                            "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
             Schema inputSchema = schema("c0", Types.STRING);
             Schema outputSchema = new SchemaConverter(log, pluginTask(conf), inputSchema).toOutputSchema();
 
@@ -313,10 +313,10 @@ public class TestSchemaConverter
             assertEquals(inputSchema.getColumn(0), outputSchema.getColumn(0));
             assertEquals(new Column(1, "time", Types.TIMESTAMP), outputSchema.getColumn(1));
         }
-        { // specify 'format'
+        { // specify 'timestamp_format'
             ConfigSource conf = config.deepCopy()
                     .set("from_value", ImmutableMap.of("mode", "incremental_time",
-                            "from", "2016-01-01 10:10:10.000 UTC", "to", "2016-01-01 10:10:10.000 UTC", "format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+                            "from", "2016-01-01 10:10:10.000 UTC", "to", "2016-01-01 10:10:10.000 UTC", "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
             Schema inputSchema = schema("c0", Types.STRING);
             Schema outputSchema = new SchemaConverter(log, pluginTask(conf), inputSchema).toOutputSchema();
 

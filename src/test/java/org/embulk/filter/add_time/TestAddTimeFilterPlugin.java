@@ -133,10 +133,10 @@ public class TestAddTimeFilterPlugin
                 assertEquals(1451646671L, ((Timestamp) record[5]).getEpochSecond());
             }
         }
-        { // specifies format
+        { // specifies timestamp_format
             ConfigSource conf = this.config.deepCopy()
                     .set("to_column", ImmutableMap.of("name", "time"))
-                    .set("from_value", ImmutableMap.of("mode", "fixed_time", "value", "2016-01-01 11:11:11.000 UTC", "format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+                    .set("from_value", ImmutableMap.of("mode", "fixed_time", "value", "2016-01-01 11:11:11.000 UTC", "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
             List<Page> pages = newPages(true, 0L, 0.1, "foo", Timestamp.ofEpochSecond(1451646671));
 
             callTansaction(conf, inputSchema, pages);
@@ -176,11 +176,11 @@ public class TestAddTimeFilterPlugin
                 assertEquals(1451646671L, ((Timestamp) record[5]).getEpochSecond());
             }
         }
-        { // specifies format
+        { // specifies timestamp_format
             ConfigSource conf = this.config.deepCopy()
                     .set("to_column", ImmutableMap.of("name", "time"))
                     .set("from_value", ImmutableMap.of("mode", "incremental_time",
-                            "from", "2016-01-01 11:11:11.000 UTC", "to", "2016-01-01 11:11:12.000 UTC", "format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+                            "from", "2016-01-01 11:11:11.000 UTC", "to", "2016-01-01 11:11:12.000 UTC", "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
             List<Page> pages = newPages(true, 0L, 0.1, "foo", Timestamp.ofEpochSecond(1451646671));
 
             callTansaction(conf, inputSchema, pages);
