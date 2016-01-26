@@ -29,7 +29,7 @@ embulk-filter-add_time plugin allows users to add new time based column to the e
 
 ### to_column option
 
-`to_column` option allows add new column has the name specified as `name` and the type specified as `type`. For example, it adds new 'time' named column specified as `to_column` to the existing schema and inserts `Timestamp` value into each the column. If the column of same name specified as `to_column`.`name` already exists in the schema, the existing column name will be changed.
+`to_column` option allows add new column has the name specified as `name` and the type specified as `type`. For example, it adds new 'time' named column specified as `to_column` to the existing schema and inserts `timestamp` value into each the column. If the column of same name specified as `to_column`.`name` already exists in the schema, the existing column name is changed. '_' is appended to the end of the existing name. For example, if 'created_at' is specified as 'to_column' but the column name already exists, the existing column name is changed to 'created_at_'.
 
 ```yaml
 filters:
@@ -41,9 +41,9 @@ filters:
     value: "2016-01-01 00:00:00 UTC"
 ```
 
-When `long` type is specified as `to_column`.`type`, `unix_timestamp_unit` is required to convert from `Timestamp` value to `long` value.
+When `long` type is specified as `to_column`.`type`, `unix_timestamp_unit` is required to convert from `timestamp` value to `long` value.
 
-```
+```yaml
 filters:
 - type: add_time
   to_column:
@@ -81,11 +81,11 @@ filters:
     value: "2016-01-01 00:00:00 UTC"
 ```
 
-`incremental_time` mode can insert incremental timestamps to the column. Timestamp values will be incremented by 1 second each value. `upload_time` mode can insert Embulk's constant transaction_time to the column.
+`incremental_time` mode can insert incremental `timestamp` values to the column. The values will be incremented by 1 second each value. `upload_time` mode can insert Embulk's **constant** transaction_time to the column.
 
 ### from_column option
 
-`from_column` option allows to copy values from the existing `Timestamp` typed column specified as `from_column` to new column specified as `to_column` as following.
+`from_column` option allows to copy values from the existing `timestamp` typed column specified as `from_column` to new column specified as `to_column` as following.
 
 ```yaml
 filters:
@@ -97,7 +97,7 @@ filters:
     name: created_at
 ```
 
-When `created_at` column is string, `timestamp_format` option is required because the string value should convert to `Timestamp` value.
+When `created_at` column is string, `timestamp_format` option is required because the string value should be converted to `timestamp` value.
 
 ```yaml
 filters:
