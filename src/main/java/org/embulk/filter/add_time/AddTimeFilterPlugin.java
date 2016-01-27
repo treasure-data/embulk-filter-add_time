@@ -1,5 +1,6 @@
 package org.embulk.filter.add_time;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.base.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -79,15 +80,19 @@ public class AddTimeFilterPlugin
 
         @Config("value")
         @ConfigDefault("null")
-        Optional<String> getValue();
+        Optional<Object> getValue();
 
         @Config("from")
         @ConfigDefault("null")
-        Optional<String> getFrom();
+        Optional<Object> getFrom();
 
         @Config("to")
         @ConfigDefault("null")
-        Optional<String> getTo();
+        Optional<Object> getTo();
+
+        @Config("unix_timestamp_unit")
+        @ConfigDefault("\"sec\"")
+        String getUnixTimestampUnit();
 
         @Config("timestamp_format")
         @ConfigDefault("\"%Y-%m-%d %H:%M:%S %z\"") // override default value
