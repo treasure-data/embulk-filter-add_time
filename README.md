@@ -64,14 +64,16 @@ a string specifying the mode. There are 3 valid modes (default is `fixed_time`):
   * `upload_time`<br/>
   In this mode, all values of the added `to_column` column are set with the fixed value corresponding to the time the Embulk upload was started. This mode does not require additional parameters.
 - **timestamp_format**<br/>
-a string specifying how to parse the string value provided as either `value` or `from`/`to` parameters depending on the `mode` in use (default is `"%Y-%m-%d %H:%m:%s %Z"`).<br/>
+a string specifying how to parse the string value provided as either `value` or `from`/`to` parameters depending on the `mode` in use (default is `"%Y-%m-%d %H:%M:%S %z"`).<br/>
 It follow the [Ruby's `strptime` format](http://ruby-doc.org/stdlib-2.0.0/libdoc/date/rdoc/DateTime.html#method-c-strptime). Note that at the moment also Unix timestamps and epoch times need to be specified as string, therefore the `timestamp_format` parameter needs to specify how to parse it.
+- **unix_timestamp_unit**<br/>
+a string specifying the expected unit of the unix timestamp for the long value provides as either `value` or `from`/`to` parameters `sec`, `milli` (for milliseconds), `micro` (for microseconds), or `nano` (for nanoseconds) are the supported values for this option (default is `sec`).
 
-These parameters are mutually exclusive and the usage depend on the `mode`. The format of the value used here needs to match the rule provided in the `timestamp_format` parameter:
+These parameters are mutually exclusive and the usage depend on the `mode`. The type of them is string or long. The format of the string value used here needs to match the rule provided in the `timestamp_format` parameter. The long value is converted to the unix timestamp with the unit provided in the `unix_timestamp_unit` parameter:
 - **value**<br/>
-a string specifying a fixed value for the added time column. This options is required if the mode is `fixed_time`.
+a string or long values specifying a fixed value for the added time column. This options is required if the mode is `fixed_time`.
 - **from** and **to**<br/>
-two strings specifying the value for the beginning and end of the range of time for `mode: incremental_time`. The format needs to be consistent between these two parameters.
+two strings or long values specifying the value for the beginning and end of the range of time for `mode: incremental_time`. The format needs to be consistent between these two parameters.
 
 Example: `mode: fixed_time`
 ```yaml
@@ -82,8 +84,8 @@ filters:
     type: timestamp
   from_value:
     mode: fixed_time
-    value: "1453939479"
-    timestamp_format: "%s"
+    value: "2016-01-01 00:00:00 UTC"
+    timestamp_format: "%Y-%m-%d %H:%M:%S %z"
 ```
 
 The mode `fixed_time` is default and can be omitted:
@@ -96,6 +98,15 @@ filters:
     type: timestamp
   from_value:
     value: "2016-01-01 00:00:00 UTC"
+```
+```yaml
+filters:
+- type: add_time
+  to_column:
+    name: time
+    type: timestamp
+  from_value:
+    value: 1453939479
 ```
 
 where in this example the format of the value is also corresponding to the default, therefore the `timestamp_format` option is also omitted.
@@ -137,7 +148,7 @@ a string specifying the name of the source column from the Embulk schema. The co
 - **unix_timestamp_unit**<br/>
 a string specifying the expected unit of the unix timestamp for the values of the source column: it is **required** only if the type of the source column is `long` (see above for supported types). The supported values are `sec` for seconds, `milli` for milliseconds, `micro` for microseconds, and `nano` for nanoseconds (default is `sec`).
 - **timestamp_format**<br/>
-a string specifying the expected format of the values in the source column: it is **required** only if the type of the column is `string` (see above for supported types) (default is `"%Y-%m-%d %H:%M:%S %Z"`). It follow the [Ruby's `strptime` format](http://ruby-doc.org/stdlib-2.0.0/libdoc/date/rdoc/DateTime.html#method-c-strptime).
+a string specifying the expected format of the values in the source column: it is **required** only if the type of the column is `string` (see above for supported types) (default is `"%Y-%m-%d %H:%M:%S %z"`). It follow the [Ruby's `strptime` format](http://ruby-doc.org/stdlib-2.0.0/libdoc/date/rdoc/DateTime.html#method-c-strptime).
 
 Note that if neither `timestamp_format` or `unix_timestamp_unit` parameters are specified, the column type is expected to be `timestamp`.
 
@@ -166,7 +177,7 @@ filters:
     timezone: UTC
 ```
 
-If the type of the source column is long, the `unix_timestamp_unit` parameter is required. The additional parameter provides Embulk the information to properly parse the `long` values of the source column and convert them to type specified in the `to_column` configuration`.
+If the type of the source column is long, the `unix_timestamp_unit` parameter is required. The additional parameter provides Embulk the information to properly parse the `long` values of the source column and convert them to type specified in the `to_column` configuration.
 
 ```yaml
 filters:
@@ -196,4 +207,6 @@ $ ./gradlew gem classpath
 ```
 
 ### Run on Embulk
+```
 $ bin/embulk run -I embulk-filter-add_time/lib/ config.yml
+```
