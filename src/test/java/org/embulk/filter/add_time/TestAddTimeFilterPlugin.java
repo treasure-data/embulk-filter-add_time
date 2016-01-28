@@ -153,6 +153,26 @@ public class TestAddTimeFilterPlugin
                 assertEquals(1451646671L, ((Timestamp) record[5]).getEpochSecond());
             }
         }
+        { // specifies unix_timestamp_unit
+            ConfigSource conf = this.config.deepCopy()
+                    .set("to_column", ImmutableMap.of("name", "time"))
+                    .set("from_value", ImmutableMap.of("mode", "fixed_time", "value", 1451646671, "unix_timestamp_unit", "sec"));
+            List<Page> pages = newPages(true, 0L, 0.1, "foo", Timestamp.ofEpochSecond(1451646671));
+
+            callTansaction(conf, inputSchema, pages);
+
+            assertEquals(1, records.size());
+            for (Object[] record : records) {
+                assertEquals(inputSchema.size() + 1, record.length);
+
+                assertEquals(true, record[0]);
+                assertEquals(0L, record[1]);
+                assertEquals(0.1, record[2]);
+                assertEquals("foo", record[3]);
+                assertEquals(1451646671L, ((Timestamp) record[4]).getEpochSecond());
+                assertEquals(1451646671L, ((Timestamp) record[5]).getEpochSecond());
+            }
+        }
 
         // mode: incremental_time
         {
@@ -181,6 +201,27 @@ public class TestAddTimeFilterPlugin
                     .set("to_column", ImmutableMap.of("name", "time"))
                     .set("from_value", ImmutableMap.of("mode", "incremental_time",
                             "from", "2016-01-01 11:11:11.000 UTC", "to", "2016-01-01 11:11:12.000 UTC", "timestamp_format", "%Y-%m-%d %H:%M:%S.%N %Z"));
+            List<Page> pages = newPages(true, 0L, 0.1, "foo", Timestamp.ofEpochSecond(1451646671));
+
+            callTansaction(conf, inputSchema, pages);
+
+            assertEquals(1, records.size());
+            for (Object[] record : records) {
+                assertEquals(inputSchema.size() + 1, record.length);
+
+                assertEquals(true, record[0]);
+                assertEquals(0L, record[1]);
+                assertEquals(0.1, record[2]);
+                assertEquals("foo", record[3]);
+                assertEquals(1451646671L, ((Timestamp) record[4]).getEpochSecond());
+                assertEquals(1451646671L, ((Timestamp) record[5]).getEpochSecond());
+            }
+        }
+        { // specifies unix_timestamp_unit
+            ConfigSource conf = this.config.deepCopy()
+                    .set("to_column", ImmutableMap.of("name", "time"))
+                    .set("from_value", ImmutableMap.of("mode", "incremental_time",
+                            "from", 1451646671, "to", 1451646672, "unix_timestamp_unit", "sec"));
             List<Page> pages = newPages(true, 0L, 0.1, "foo", Timestamp.ofEpochSecond(1451646671));
 
             callTansaction(conf, inputSchema, pages);

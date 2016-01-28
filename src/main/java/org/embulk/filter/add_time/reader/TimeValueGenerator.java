@@ -3,6 +3,7 @@ package org.embulk.filter.add_time.reader;
 import com.google.common.base.Optional;
 import org.embulk.config.ConfigException;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromValueConfig;
+import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
 import org.embulk.filter.add_time.converter.ValueConverter;
 import org.embulk.spi.Column;
 import org.embulk.spi.Exec;
@@ -135,7 +136,7 @@ public abstract class TimeValueGenerator
     private static <T> T require(Optional<T> value, String message)
     {
         if (value.isPresent()) {
-            return value.get();
+            return typeCheck(value.get(), message);
         }
         else {
             throw new ConfigException("Required option is not set: " + message);
@@ -150,8 +151,27 @@ public abstract class TimeValueGenerator
         }
     }
 
-    private static Timestamp toTimestamp(FromValueConfig config, String time)
+    private static <T> T typeCheck(T value, String message)
     {
-        return new TimestampParser(config, config).parse(time); // TODO optimize?
+        if (value instanceof String || value instanceof Number) {
+            return value;
+        }
+        else {
+            throw new ConfigException("Required option must be string or long: " + message);
+        }
+    }
+
+    private static Timestamp toTimestamp(FromValueConfig config, Object time)
+    {
+        if (time instanceof String) {
+            return new TimestampParser(config, config).parse((String) time); // TODO optimize?
+        }
+        else if (time instanceof Number) {
+            long t = ((Number) time).longValue();
+            return UnixTimestampUnit.of(config.getUnixTimestampUnit()).toTimestamp(t);
+        }
+        else {
+            throw new RuntimeException();
+        }
     }
 }
