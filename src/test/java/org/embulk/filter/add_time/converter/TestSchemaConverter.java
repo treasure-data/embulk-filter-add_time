@@ -61,6 +61,14 @@ public class TestSchemaConverter
             failSchemaConverterCreation(log, conf, schema("c0", Types.TIMESTAMP));
         }
 
+        // the column specified as from_column doesn't exist in the schema, throws ConfigException
+        {
+            ConfigSource conf = this.config.deepCopy()
+                    .set("to_column", ImmutableMap.of("name", "time"))
+                    .set("from_column", ImmutableMap.of("name", "c1"));;
+            failSchemaConverterCreation(log, conf, schema("c0", Types.TIMESTAMP));
+        }
+
         // if from_value type is not string or long, throws ConfigException
         {
             ConfigSource conf = this.config.deepCopy()

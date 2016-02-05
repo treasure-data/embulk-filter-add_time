@@ -50,6 +50,9 @@ public class SchemaConverter
         if (!fromColumnConfig.isPresent() && !fromValueConfig.isPresent()) {
             throw new ConfigException("Setting from_column or from_value is required.");
         }
+        if (fromColumnConfig.isPresent() && !hasColumn(fromColumnConfig.get().getName(), inputSchema)) {
+            throw new ConfigException(String.format("from_column '%s' doesn't exist in the schema.", fromColumnConfig.get().getName()));
+        }
 
         converters = new ColumnConverter[inputSchema.size() + 1];
 
@@ -100,6 +103,16 @@ public class SchemaConverter
                     .setColumnReader(TimeValueGenerator.newGenerator(fromValueConfig.get(), newValueCastConverter(Types.TIMESTAMP, fromColumnConfig, toColumnConfig)))
                     .build();
         }
+    }
+
+    private static boolean hasColumn(String columnName, Schema schema)
+    {
+        for (Column c : schema.getColumns()) {
+            if (c.getName().equals(columnName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String newColumnUniqueName(String originalName, Schema schema)
