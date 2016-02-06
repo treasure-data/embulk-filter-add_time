@@ -3,6 +3,7 @@ package org.embulk.filter.add_time.converter;
 import org.embulk.spi.Column;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.time.Timestamp;
+import org.msgpack.value.Value;
 
 public class ValueNoConverter
         implements ValueConverter
@@ -35,6 +36,12 @@ public class ValueNoConverter
     public void convertValue(Column column, String value, PageBuilder pageBuilder)
     {
         pageBuilder.setString(column, value);
+    }
+
+    @Override
+    public void convertValue(Column column, Value value, PageBuilder pageBuilder)
+    {
+        pageBuilder.setJson(column, value);
     }
 
     @Override
