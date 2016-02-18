@@ -9,6 +9,7 @@ import org.embulk.filter.add_time.AddTimeFilterPlugin.ToColumnConfig;
 import org.embulk.filter.add_time.reader.BooleanColumnReader;
 import org.embulk.filter.add_time.reader.ColumnReader;
 import org.embulk.filter.add_time.reader.DoubleColumnReader;
+import org.embulk.filter.add_time.reader.JsonColumnReader;
 import org.embulk.filter.add_time.reader.LongColumnReader;
 import org.embulk.filter.add_time.reader.StringColumnReader;
 import org.embulk.filter.add_time.reader.TimeValueGenerator;
@@ -21,6 +22,7 @@ import org.embulk.spi.PageReader;
 import org.embulk.spi.Schema;
 import org.embulk.spi.type.BooleanType;
 import org.embulk.spi.type.DoubleType;
+import org.embulk.spi.type.JsonType;
 import org.embulk.spi.type.LongType;
 import org.embulk.spi.type.StringType;
 import org.embulk.spi.type.TimestampType;
@@ -152,7 +154,9 @@ public class SchemaConverter
         else if (columnType instanceof TimestampType) {
             return new TimestampColumnReader(valueConverter);
         }
-        // TODO support Json type
+        else if (columnType instanceof JsonType) {
+            return new JsonColumnReader(valueConverter);
+        }
         else {
             throw new ConfigException("Unsupported type: " + columnType); // TODO after json type support, it should be changed to AssertionError.
         }
@@ -214,6 +218,12 @@ public class SchemaConverter
 
                 @Override
                 public void stringColumn(Column column)
+                {
+                    updateColumn(column, pageReader);
+                }
+
+                @Override
+                public void jsonColumn(Column column)
                 {
                     updateColumn(column, pageReader);
                 }

@@ -6,6 +6,7 @@ import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.time.Timestamp;
+import org.msgpack.value.Value;
 
 public abstract class ValueCastConverter
         implements ValueConverter
@@ -43,6 +44,12 @@ public abstract class ValueCastConverter
 
     @Override
     public void convertValue(final Column column, String value, final PageBuilder pageBuilder)
+    {
+        throw new AssertionError("Should implement in subclass.");
+    }
+
+    @Override
+    public void convertValue(final Column column, Value value, final PageBuilder pageBuilder)
     {
         throw new AssertionError("Should implement in subclass.");
     }
@@ -95,6 +102,12 @@ public abstract class ValueCastConverter
 
         @Override
         public void stringColumn(Column column)
+        {
+            throw new AssertionError("Never call.");
+        }
+
+        @Override
+        public void jsonColumn(Column column)
         {
             throw new AssertionError("Never call.");
         }
