@@ -4,17 +4,21 @@ import org.embulk.filter.add_time.AddTimeFilterPlugin.ToColumnConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
+import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.time.Timestamp;
 import org.msgpack.value.Value;
+import org.slf4j.Logger;
 
 public abstract class ValueCastConverter
         implements ValueConverter
 {
+    protected final Logger log;
     protected final TimestampValueCastVisitor columnVisitor;
 
     public ValueCastConverter(ToColumnConfig toColumnConfig)
     {
+        this.log = Exec.getLogger(ValueCastConverter.class);
         this.columnVisitor = new TimestampValueCastVisitor(UnixTimestampUnit.of(toColumnConfig.getUnixTimestampUnit()));
     }
 
