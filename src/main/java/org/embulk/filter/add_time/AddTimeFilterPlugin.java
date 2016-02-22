@@ -1,6 +1,5 @@
 package org.embulk.filter.add_time;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.base.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -69,6 +68,10 @@ public class AddTimeFilterPlugin
         @Config("default_timestamp_format")
         @ConfigDefault("\"%Y-%m-%d %H:%M:%S %z\"") // override default value
         String getDefaultTimestampFormat();
+
+        @Config("json_key")
+        @ConfigDefault("null")
+        Optional<String> getJsonKey();
     }
 
     public interface FromValueConfig

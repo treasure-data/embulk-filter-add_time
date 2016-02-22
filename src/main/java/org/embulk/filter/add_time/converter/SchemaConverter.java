@@ -30,6 +30,11 @@ import org.embulk.spi.type.Type;
 import org.embulk.spi.type.Types;
 import org.slf4j.Logger;
 
+import static org.embulk.spi.type.Types.JSON;
+import static org.embulk.spi.type.Types.LONG;
+import static org.embulk.spi.type.Types.STRING;
+import static org.embulk.spi.type.Types.TIMESTAMP;
+
 public class SchemaConverter
 {
     private final Logger log;
@@ -74,9 +79,9 @@ public class SchemaConverter
             }
 
             if (fromColumnConfig.isPresent() && columnName.equals(fromColumnConfig.get().getName())) {
-                if (!columnType.equals(Types.LONG) && !columnType.equals(Types.STRING) && !columnType.equals(Types.TIMESTAMP)) {
+                if (!(columnType.equals(LONG) || columnType.equals(STRING) || columnType.equals(TIMESTAMP) || columnType.equals(JSON))) {
                     throw new ConfigException(String.format(
-                            "The type of the '%s' column specified as from_column must be long, string or timestamp. But it's %s.", columnName, columnType));
+                            "The type of the '%s' column specified as from_column must be long, string, timestamp or json. But it's %s.", columnName, columnType));
                 }
 
                 ColumnReader duplicatee = newColumnReader(columnType, newValueCastConverter(columnType, fromColumnConfig, toColumnConfig));
@@ -169,6 +174,9 @@ public class SchemaConverter
         }
         else if (columnType instanceof StringType) {
             return new StringValueCastConverter(fromColumnConfig.get(), toColumnConfig);
+        }
+        else if (columnType instanceof JsonType) {
+            return new JsonValueCastConverter(fromColumnConfig.get(), toColumnConfig);
         }
         else if (columnType instanceof TimestampType) {
             return new TimestampValueCastConverter(toColumnConfig);
