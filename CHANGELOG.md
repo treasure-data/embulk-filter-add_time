@@ -1,4 +1,4 @@
-## 0.2.0 - 20XX-XX-XX
+## 0.2.0 - 2016-02-22
 
 * [new feature] Support json_key sub option in from_column option [#7](https://github.com/treasure-data/embulk-filter-add_time/pull/7)
 * [maintenance] Upgrade Embulk v08 [#6](https://github.com/treasure-data/embulk-filter-add_time/pull/6)

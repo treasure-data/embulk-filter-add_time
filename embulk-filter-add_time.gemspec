@@ -1,7 +1,7 @@
 
 Gem::Specification.new do |spec|
   spec.name          = "embulk-filter-add_time"
-  spec.version       = "0.1.1"
+  spec.version       = "0.2.0"
   spec.authors       = ["Muga Nishizawa"]
   spec.summary       = %[Add time filter plugin for Embulk]
   spec.description   = %[Add time column to the schema]
