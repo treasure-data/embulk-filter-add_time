@@ -188,7 +188,7 @@ filters:
     unix_timestamp_unit: sec
   from_column:
     name: created_at
-    unixtime_unit: milli
+    unix_timestamp_unit: milli
 ```
 
 ## Install
