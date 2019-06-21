@@ -1,6 +1,6 @@
 package org.embulk.filter.add_time.reader;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromValueConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
@@ -10,7 +10,7 @@ import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.PageReader;
 import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.time.TimestampParser;
+import org.embulk.util.timestamp.TimestampFormatter;
 
 public abstract class TimeValueGenerator
         implements ColumnReader
@@ -164,7 +164,13 @@ public abstract class TimeValueGenerator
     private static Timestamp toTimestamp(FromValueConfig config, Object time)
     {
         if (time instanceof String) {
-            return new TimestampParser(config, config).parse((String) time); // TODO optimize?
+            // TODO optimize?
+            final TimestampFormatter.Builder builder = TimestampFormatter.builder(
+                    config.getFormat().orElse(config.getDefaultTimestampFormat()), true);
+            builder.setDefaultZoneFromString(config.getTimeZoneId().orElse(config.getDefaultTimeZoneId()));
+            builder.setDefaultDateFromString(config.getDate().orElse(config.getDefaultDate()));
+            final TimestampFormatter formatter = builder.build();
+            return Timestamp.ofInstant(formatter.parse((String) time));
         }
         else if (time instanceof Number) {
             long t = ((Number) time).longValue();

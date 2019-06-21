@@ -1,6 +1,6 @@
 package org.embulk.filter.add_time;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
 import org.embulk.config.ConfigException;
@@ -51,9 +51,40 @@ public class AddTimeFilterPlugin
         String getUnixTimestampUnit();
     }
 
-    public interface FromColumnConfig
-            extends Task, org.embulk.spi.time.TimestampParser.Task, org.embulk.spi.time.TimestampParser.TimestampColumnOption
+    public interface FromColumnConfig extends Task
     {
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        @Config("default_timezone")
+        @ConfigDefault("\"UTC\"")
+        String getDefaultTimeZoneId();
+
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        // But, this is overridden below.
+        // @Config("default_timestamp_format")
+        // @ConfigDefault("\"%Y-%m-%d %H:%M:%S.%N %z\"")
+        // String getDefaultTimestampFormat();
+
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        @Config("default_date")
+        @ConfigDefault("\"1970-01-01\"")
+        String getDefaultDate();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        @Config("timezone")
+        @ConfigDefault("null")
+        Optional<String> getTimeZoneId();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        // But, this is overridden below.
+        // @Config("format")
+        // @ConfigDefault("null")
+        // Optional<String> getFormat();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        @Config("date")
+        @ConfigDefault("null")
+        Optional<String> getDate();
+
         @Config("name")
         String getName();
 
@@ -74,9 +105,40 @@ public class AddTimeFilterPlugin
         Optional<String> getJsonKey();
     }
 
-    public interface FromValueConfig
-            extends Task, org.embulk.spi.time.TimestampParser.Task, org.embulk.spi.time.TimestampParser.TimestampColumnOption
+    public interface FromValueConfig extends Task
     {
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        @Config("default_timezone")
+        @ConfigDefault("\"UTC\"")
+        String getDefaultTimeZoneId();
+
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        // But, this is overridden below.
+        // @Config("default_timestamp_format")
+        // @ConfigDefault("\"%Y-%m-%d %H:%M:%S.%N %z\"")
+        // String getDefaultTimestampFormat();
+
+        // Came from org.embulk.spi.time.TimestampParser.Task
+        @Config("default_date")
+        @ConfigDefault("\"1970-01-01\"")
+        String getDefaultDate();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        @Config("timezone")
+        @ConfigDefault("null")
+        Optional<String> getTimeZoneId();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        // But, this is overridden below.
+        // @Config("format")
+        // @ConfigDefault("null")
+        // Optional<String> getFormat();
+
+        // Came from org.embulk.spi.time.TimestampParser.TimestampColumnOption
+        @Config("date")
+        @ConfigDefault("null")
+        Optional<String> getDate();
+
         @Config("mode")
         @ConfigDefault("\"fixed_time\"")
         String getMode();

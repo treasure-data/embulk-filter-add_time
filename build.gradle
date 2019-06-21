@@ -18,16 +18,17 @@ configurations {
 version = "0.2.0"
 
 compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.5"
-    provided "org.embulk:embulk-core:0.8.5"
+    compile  "org.embulk:embulk-core:0.9.17"
+    provided "org.embulk:embulk-core:0.9.17"
+    compile  "org.embulk:embulk-util-timestamp:0.1.1"
 
-    testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-standards:0.8.5"
-    testCompile "org.embulk:embulk-core:0.8.5:tests"
+    testCompile "junit:junit:4.12"
+    testCompile "org.embulk:embulk-standards:0.9.17"
+    testCompile "org.embulk:embulk-core:0.9.17:tests"
     testCompile "org.mockito:mockito-core:1.9.5"
 }
 

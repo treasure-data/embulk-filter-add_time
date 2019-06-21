@@ -1,32 +1,38 @@
 package org.embulk.filter.add_time.converter;
 
+import static org.msgpack.value.ValueFactory.newString;
+
+import java.time.format.DateTimeParseException;
+import java.time.Instant;
+import java.util.Map;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromColumnConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.ToColumnConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
 import org.embulk.spi.Column;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.time.TimestampParseException;
-import org.embulk.spi.time.TimestampParser;
+import org.embulk.util.timestamp.TimestampFormatter;
 import org.msgpack.core.MessagePackException;
 import org.msgpack.value.Value;
-
-import java.util.Map;
-
-import static org.msgpack.value.ValueFactory.newString;
 
 public class JsonValueCastConverter
         extends ValueCastConverter
 {
     private final Value jsonKey;
-    private final TimestampParser fromTimestampParser; // for string value
+    private final TimestampFormatter fromTimestampFormatter; // for string value
     private final UnixTimestampUnit fromUnixTimestampUnit; // for long value
 
     public JsonValueCastConverter(FromColumnConfig fromColumnConfig, ToColumnConfig toColumnConfig)
     {
         super(toColumnConfig);
         this.jsonKey = newString(fromColumnConfig.getJsonKey().get());
-        this.fromTimestampParser = new TimestampParser(fromColumnConfig, fromColumnConfig);
+
+        final TimestampFormatter.Builder builder = TimestampFormatter.builder(
+                fromColumnConfig.getFormat().orElse(fromColumnConfig.getDefaultTimestampFormat()), true);
+        builder.setDefaultZoneFromString(fromColumnConfig.getTimeZoneId().orElse(fromColumnConfig.getDefaultTimeZoneId()));
+        builder.setDefaultDateFromString(fromColumnConfig.getDate().orElse(fromColumnConfig.getDefaultDate()));
+        this.fromTimestampFormatter = builder.build();
+
         this.fromUnixTimestampUnit = UnixTimestampUnit.of(fromColumnConfig.getUnixTimestampUnit());
     }
 
@@ -45,7 +51,7 @@ public class JsonValueCastConverter
 
             Value v = map.get(jsonKey);
             if (v.isStringValue()) {
-                columnVisitor.setValue(stringToTimestamp(v));
+                columnVisitor.setValue(Timestamp.ofInstant(stringToInstant(v)));
             }
             else if (v.isIntegerValue()) {
                 columnVisitor.setValue(longToTimestamp(v));
@@ -58,15 +64,15 @@ public class JsonValueCastConverter
             columnVisitor.setPageBuilder(pageBuilder);
             column.visit(columnVisitor);
         }
-        catch (InvalidCastException | TimestampParseException | MessagePackException e) {
+        catch (InvalidCastException | DateTimeParseException | MessagePackException e) {
             log.warn(String.format("Cannot convert (%s): %s", e.getMessage(), value.toJson()));
             pageBuilder.setNull(column);
         }
     }
 
-    private Timestamp stringToTimestamp(Value value)
+    private Instant stringToInstant(Value value)
     {
-        return fromTimestampParser.parse(value.asStringValue().toString());
+        return fromTimestampFormatter.parse(value.asStringValue().toString());
     }
 
     private Timestamp longToTimestamp(Value value)
