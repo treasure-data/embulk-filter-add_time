@@ -1,82 +1,64 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
-    id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
+    id "maven-publish"
+    id "org.embulk.embulk-plugins" version "0.2.6"
 }
 
 apply from: 'gradle/check.gradle'
 
-import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
     jcenter()
 }
-configurations {
-    provided
+
+group = "org.embulk"
+version = "0.3.0"
+description = "Add time column to the schema"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    options.encoding = "UTF-8"  // source encoding
 }
-
-version = "0.2.0"
-
-compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.5"
-    provided "org.embulk:embulk-core:0.8.5"
+    compileOnly "org.embulk:embulk-core:0.9.23"
 
-    testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-standards:0.8.5"
-    testCompile "org.embulk:embulk-core:0.8.5:tests"
+    testCompile "junit:junit:4.13"
+    testCompile "org.embulk:embulk-standards:0.9.23"
+    testCompile "org.embulk:embulk-core:0.9.23:tests"
     testCompile "org.mockito:mockito-core:1.9.5"
+    testCompile "org.embulk:embulk-deps-buffer:0.9.23"
+    testCompile "org.embulk:embulk-deps-config:0.9.23"
 }
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
-}
-clean { delete "classpath" }
-
-task gem(type: JRubyExec, dependsOn: ["gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "${project.name}.gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
+embulkPlugin {
+    mainClass = "org.embulk.filter.add_time.AddTimeFilterPlugin"
+    category = "filter"
+    type = "add_time"
 }
 
-task gemPush(type: JRubyExec, dependsOn: ["gem"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "push"
-    script "pkg/${project.name}-${project.version}.gem"
-}
-
-task "package"(dependsOn: ["gemspec", "classpath"]) << {
-    println "> Build succeeded."
-    println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
-}
-
-task gemspec {
-    ext.gemspecFile = file("${project.name}.gemspec")
-    inputs.file "build.gradle"
-    outputs.file gemspecFile
-    doLast { gemspecFile.write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["Muga Nishizawa"]
-  spec.summary       = %[Add time filter plugin for Embulk]
-  spec.description   = %[Add time column to the schema]
-  spec.email         = ["muga.nishizawa@gmail.com"]
-  spec.licenses      = ["Apache 2.0"]
-  spec.homepage      = "https://github.com/treasure-data/embulk-filter-add_time"
-
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
-
-  spec.add_development_dependency 'bundler', ['~> 1.0']
-  spec.add_development_dependency 'rake', ['>= 10.0']
-end
-/$)
+publishing {
+    publications {
+        embulkPluginMaven(MavenPublication) {  // Publish it with "publishEmbulkPluginMavenPublicationToMavenRepository".
+            from components.java  // Must be "components.java". The dependency modification works only for it.
+        }
+    }
+    repositories {
+        // TODO: Configure some public Maven repo(s).
     }
 }
-clean { delete "${project.name}.gemspec" }
+
+gem {
+    authors = [ "Muga Nishizawa" ]
+    email = [ "muga.nishizawa@gmail.com" ]
+    summary = "Add time filter plugin for Embulk"
+    homepage = "https://github.com/treasure-data/embulk-filter-add_time"
+    licenses = [ "Apache 2.0" ]
+}
+
+gemPush {
+    host = "https://rubygems.org"
+}
