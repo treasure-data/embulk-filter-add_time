@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
@@ -25,13 +26,12 @@ public class TestSchemaConverter
     @Rule
     public EmbulkTestRuntime runtime = new EmbulkTestRuntime();
 
-    private Logger log;
+    private static final Logger log = LoggerFactory.getLogger(TestSchemaConverter.class);
     private ConfigSource config;
 
     @Before
     public void createResources()
     {
-        log = runtime.getExec().getLogger(TestSchemaConverter.class);
         config = runtime.getExec().newConfigSource();
     }
 

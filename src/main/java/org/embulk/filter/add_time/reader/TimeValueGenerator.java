@@ -1,6 +1,7 @@
 package org.embulk.filter.add_time.reader;
 
-import com.google.common.base.Optional;
+import java.time.Instant;
+import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromValueConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
@@ -9,8 +10,7 @@ import org.embulk.spi.Column;
 import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
 import org.embulk.spi.PageReader;
-import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.time.TimestampParser;
+import org.embulk.util.timestamp.TimestampFormatter;
 
 public abstract class TimeValueGenerator
         implements ColumnReader
@@ -22,7 +22,7 @@ public abstract class TimeValueGenerator
         this.valueConverter = valueConverter;
     }
 
-    protected abstract Timestamp nextTimestamp();
+    protected abstract Instant nextInstant();
 
     @Override
     public void readValue(Column column, PageReader pageReader)
@@ -33,7 +33,7 @@ public abstract class TimeValueGenerator
     @Override
     public void convertValue(Column column, PageBuilder pageBuilder)
     {
-        valueConverter.convertValue(column, nextTimestamp(), pageBuilder);
+        valueConverter.convertValue(column, this.nextInstant(), pageBuilder);
     }
 
     @Override
@@ -71,24 +71,24 @@ public abstract class TimeValueGenerator
     public static class IncrementalTimeValueGenerator
             extends TimeValueGenerator
     {
-        private final Timestamp from;
-        private final Timestamp to;
+        private final Instant from;
+        private final Instant to;
 
-        private Timestamp current;
+        private Instant current;
 
         public IncrementalTimeValueGenerator(final FromValueConfig config, ValueConverter valueConverter)
         {
             super(valueConverter);
-            current = from = toTimestamp(config, config.getFrom().get());
-            to = toTimestamp(config, config.getTo().get());
+            current = from = toInstant(config, config.getFrom().get());
+            to = toInstant(config, config.getTo().get());
         }
 
         @Override
-        public Timestamp nextTimestamp()
+        public Instant nextInstant()
         {
             try {
-                Timestamp ret = current;
-                current = Timestamp.ofEpochSecond(current.getEpochSecond() + 1, current.getNano());
+                Instant ret = current;
+                current = Instant.ofEpochSecond(current.getEpochSecond() + 1, current.getNano());
                 return ret;
             }
             finally {
@@ -102,21 +102,21 @@ public abstract class TimeValueGenerator
     public static class FixedTimeValueGenerator
             extends TimeValueGenerator
     {
-        private final Timestamp value;
+        private final Instant value;
 
         public FixedTimeValueGenerator(FromValueConfig config, ValueConverter valueConverter)
         {
-            this(toTimestamp(config, config.getValue().get()), valueConverter);
+            this(toInstant(config, config.getValue().get()), valueConverter);
         }
 
-        public FixedTimeValueGenerator(Timestamp value, ValueConverter valueConverter)
+        public FixedTimeValueGenerator(Instant value, ValueConverter valueConverter)
         {
             super(valueConverter);
             this.value = value;
         }
 
         @Override
-        public Timestamp nextTimestamp()
+        public Instant nextInstant()
         {
             return value;
         }
@@ -126,9 +126,10 @@ public abstract class TimeValueGenerator
     public static class UploadTimeValueGenerator
             extends FixedTimeValueGenerator
     {
+        @SuppressWarnings("deprecation")  // For use of Exec.getTransactionTime()
         public UploadTimeValueGenerator(ValueConverter valueConverter)
         {
-            super(Exec.getTransactionTime(), valueConverter);
+            super(Exec.getTransactionTime().getInstant(), valueConverter);
         }
     }
 
@@ -161,14 +162,19 @@ public abstract class TimeValueGenerator
         }
     }
 
-    private static Timestamp toTimestamp(FromValueConfig config, Object time)
+    private static Instant toInstant(FromValueConfig config, Object time)
     {
         if (time instanceof String) {
-            return new TimestampParser(config, config).parse((String) time); // TODO optimize?
+            final String pattern = config.getFormat().orElse(config.getDefaultTimestampFormat());
+            return TimestampFormatter.builder(pattern, true)
+                    .setDefaultZoneFromString(config.getTimeZoneId().orElse(config.getDefaultTimeZoneId()))
+                    .setDefaultDateFromString(config.getDate().orElse(config.getDefaultDate()))
+                    .build()
+                    .parse((String) time);  // TODO optimize?
         }
         else if (time instanceof Number) {
             long t = ((Number) time).longValue();
-            return UnixTimestampUnit.of(config.getUnixTimestampUnit()).toTimestamp(t);
+            return UnixTimestampUnit.of(config.getUnixTimestampUnit()).toInstant(t);
         }
         else {
             throw new RuntimeException();

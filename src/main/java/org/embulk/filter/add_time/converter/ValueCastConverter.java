@@ -1,14 +1,15 @@
 package org.embulk.filter.add_time.converter;
 
+import java.time.Instant;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.ToColumnConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.UnixTimestampUnit;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
 import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
-import org.embulk.spi.time.Timestamp;
 import org.msgpack.value.Value;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ValueCastConverter
         implements ValueConverter
@@ -18,7 +19,7 @@ public abstract class ValueCastConverter
 
     public ValueCastConverter(ToColumnConfig toColumnConfig)
     {
-        this.log = Exec.getLogger(ValueCastConverter.class);
+        this.log = LoggerFactory.getLogger(ValueCastConverter.class);
         this.columnVisitor = new TimestampValueCastVisitor(UnixTimestampUnit.of(toColumnConfig.getUnixTimestampUnit()));
     }
 
@@ -59,7 +60,7 @@ public abstract class ValueCastConverter
     }
 
     @Override
-    public void convertValue(Column column, final Timestamp value, final PageBuilder pageBuilder)
+    public void convertValue(Column column, final Instant value, final PageBuilder pageBuilder)
     {
         throw new AssertionError("Never call.");
     }
@@ -69,14 +70,14 @@ public abstract class ValueCastConverter
     {
         private final UnixTimestampUnit toUnixTimestampUnit;
         private PageBuilder currentPageBuilder;
-        private Timestamp currentValue;
+        private Instant currentValue;
 
         TimestampValueCastVisitor(UnixTimestampUnit toUnixTimestampUnit)
         {
             this.toUnixTimestampUnit = toUnixTimestampUnit;
         }
 
-        void setValue(Timestamp value)
+        void setValue(final Instant value)
         {
             this.currentValue = value;
         }
@@ -116,10 +117,11 @@ public abstract class ValueCastConverter
             throw new AssertionError("Never call.");
         }
 
+        @SuppressWarnings("deprecation")  // For use of org.embulk.spi.time.Timestamp
         @Override
         public void timestampColumn(Column column)
         {
-            currentPageBuilder.setTimestamp(column, currentValue);
+            currentPageBuilder.setTimestamp(column, org.embulk.spi.time.Timestamp.ofInstant(currentValue));
         }
     }
 }

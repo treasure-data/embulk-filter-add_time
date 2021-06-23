@@ -1,8 +1,8 @@
 package org.embulk.filter.add_time.converter;
 
+import java.time.Instant;
 import org.embulk.spi.Column;
 import org.embulk.spi.PageBuilder;
-import org.embulk.spi.time.Timestamp;
 import org.msgpack.value.Value;
 
 public class ValueNoConverter
@@ -44,10 +44,11 @@ public class ValueNoConverter
         pageBuilder.setJson(column, value);
     }
 
+    @SuppressWarnings("deprecation")  // For use of org.embulk.spi.time.Timestamp
     @Override
-    public void convertValue(Column column, Timestamp value, PageBuilder pageBuilder)
+    public void convertValue(Column column, Instant value, PageBuilder pageBuilder)
     {
-        pageBuilder.setTimestamp(column, value);
+        pageBuilder.setTimestamp(column, org.embulk.spi.time.Timestamp.ofInstant(value));
 
     }
 }

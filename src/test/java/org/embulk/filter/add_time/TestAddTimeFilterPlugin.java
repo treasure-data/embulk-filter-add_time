@@ -5,6 +5,7 @@ import org.embulk.EmbulkTestRuntime;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskSource;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.PluginTask;
+import org.embulk.spi.Exec;
 import org.embulk.spi.FilterPlugin;
 import org.embulk.spi.Page;
 import org.embulk.spi.PageOutput;
@@ -43,7 +44,7 @@ public class TestAddTimeFilterPlugin
     public void createResources()
     {
         plugin = plugin();
-        config = runtime.getExec().newConfigSource();
+        config = AddTimeFilterPlugin.CONFIG_MAPPER_FACTORY.newConfigSource();
         inputSchema = schema("c0", Types.BOOLEAN, "c1", Types.LONG, "c2", Types.DOUBLE, "c3",
                 Types.STRING, "c4", Types.TIMESTAMP, "c5", Types.JSON);
     }
@@ -315,7 +316,7 @@ public class TestAddTimeFilterPlugin
                 assertEquals("foo", record[3]);
                 assertEquals(1451646671L, ((Timestamp) record[4]).getEpochSecond());
                 assertEquals(newSimpleMap(), record[5]);
-                assertEquals(runtime.getExec().getTransactionTime(), record[6]);
+                assertEquals(Exec.getTransactionTime(), record[6]);
             }
         }
     }
@@ -435,7 +436,7 @@ public class TestAddTimeFilterPlugin
 
     private List<Page> newPages(Object... values)
     {
-        return PageTestUtils.buildPage(runtime.getBufferAllocator(), inputSchema, values);
+        return PageTestUtils.buildPage(Exec.getBufferAllocator(), inputSchema, values);
     }
 
     private void callTansaction(ConfigSource conf, final Schema inputSchema, final List<Page> pages)
@@ -469,7 +470,7 @@ public class TestAddTimeFilterPlugin
 
     public static PluginTask pluginTask(ConfigSource config)
     {
-        return config.loadConfig(PluginTask.class);
+        return AddTimeFilterPlugin.CONFIG_MAPPER.map(config, PluginTask.class);
     }
 
     public static AddTimeFilterPlugin plugin()

@@ -1,84 +1,163 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
-    id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
+    id "maven-publish"
+    id "signing"
+    id "org.embulk.embulk-plugins" version "0.4.2"
+    id "checkstyle"
+    id "jacoco"
 }
 
-apply from: 'gradle/check.gradle'
-
-import com.github.jrubygradle.JRubyExec
 repositories {
     mavenCentral()
-    jcenter()
-}
-configurations {
-    provided
 }
 
+group = "com.treasuredata.embulk.plugins"
 version = "0.3.0-SNAPSHOT"
+description = "Add time column to the schema"
 
-compileJava.options.encoding = 'UTF-8' // source encoding
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+    options.encoding = "UTF-8"
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.8.5"
-    provided "org.embulk:embulk-core:0.8.5"
+    compileOnly "org.embulk:embulk-api:0.10.31"
+    compileOnly "org.embulk:embulk-spi:0.10.31"
 
-    testCompile "junit:junit:4.+"
-    testCompile "org.embulk:embulk-standards:0.8.5"
-    testCompile "org.embulk:embulk-core:0.8.5:tests"
+    compile("org.embulk:embulk-util-config:0.3.1") {
+        // They conflict with embulk-core. They are once excluded here,
+        // and added explicitly with versions exactly the same with embulk-core:0.10.31.
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-annotations"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "com.fasterxml.jackson.datatype", module: "jackson-datatype-jdk8"
+        exclude group: "javax.validation", module: "validation-api"
+    }
+
+    // They are once excluded from transitive dependencies of other dependencies,
+    // and added explicitly with versions exactly the same with embulk-core:0.10.31.
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.6.7"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"
+    compile "javax.validation:validation-api:1.1.0.Final"
+
+    compile "org.embulk:embulk-util-timestamp:0.2.1"
+
+    testCompile "junit:junit:4.13.2"
+    testCompile "org.embulk:embulk-core:0.10.31"
+    testCompile "org.embulk:embulk-core:0.10.31:tests"
+    testCompile "org.embulk:embulk-deps:0.10.31"
+    testCompile "org.embulk:embulk-junit4:0.10.31"
     testCompile "org.mockito:mockito-core:1.9.5"
 }
 
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
-}
-clean { delete "classpath" }
-
-task gem(type: JRubyExec, dependsOn: ["gemspec", "classpath"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "build"
-    script "${project.name}.gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
+embulkPlugin {
+    mainClass = "org.embulk.filter.add_time.AddTimeFilterPlugin"
+    category = "filter"
+    type = "add_time"
 }
 
-task gemPush(type: JRubyExec, dependsOn: ["gem"]) {
-    jrubyArgs "-rrubygems/gem_runner", "-eGem::GemRunner.new.run(ARGV)", "push"
-    script "pkg/${project.name}-${project.version}.gem"
-}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.name
 
-task "package"(dependsOn: ["gemspec", "classpath"]) {
-    doLast {
-        println "> Build succeeded."
-        println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+            from components.java  // Must be "components.java". The dependency modification works only for it.
+            // javadocJar and sourcesJar are added by java.withJavadocJar() and java.withSourcesJar() above.
+            // See: https://docs.gradle.org/current/javadoc/org/gradle/api/plugins/JavaPluginExtension.html
+
+            pom {  // https://central.sonatype.org/pages/requirements.html
+                packaging "jar"
+
+                name = project.name
+                description = project.description
+                url = "https://github.com/treasure-data/embulk-filter-add_time"
+
+                licenses {
+                    license {
+                        // http://central.sonatype.org/pages/requirements.html#license-information
+                        name = "The Apache License, Version 2.0"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+
+                developers {
+                    developer {
+                        name = "Muga Nishizawa"
+                        email = "muga.nishizawa@gmail.com"
+                    }
+                    developer {
+                        name = "Dai MIKURUBE"
+                        email = "dmikurube@treasure-data.com"
+                    }
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/treasure-data/embulk-filter-add_time.git"
+                    developerConnection = "scm:git:git@github.com:treasure-data/embulk-filter-add_time.git"
+                    url = "https://github.com/treasure-data/embulk-filter-add_time"
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {  // publishMavenPublicationToMavenCentralRepository
+            name = "mavenCentral"
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://oss.sonatype.org/content/repositories/snapshots"
+            } else {
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            }
+
+            credentials {
+                username = project.hasProperty("ossrhUsername") ? ossrhUsername : ""
+                password = project.hasProperty("ossrhPassword") ? ossrhPassword : ""
+            }
+        }
     }
 }
 
-task gemspec {
-    ext.gemspecFile = file("${project.name}.gemspec")
-    inputs.file "build.gradle"
-    outputs.file gemspecFile
-    doLast { gemspecFile.write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["Muga Nishizawa"]
-  spec.summary       = %[Add time filter plugin for Embulk]
-  spec.description   = %[Add time column to the schema]
-  spec.email         = ["muga.nishizawa@gmail.com"]
-  spec.licenses      = ["Apache 2.0"]
-  spec.homepage      = "https://github.com/treasure-data/embulk-filter-add_time"
+signing {
+    sign publishing.publications.maven
+}
 
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
+gem {
+    authors = [ "Muga Nishizawa", "Dai MIKURUBE" ]
+    email = [ "muga.nishizawa@gmail.com", "dmikurube@treasure-data.com" ]
+    summary = "Add time filter plugin for Embulk"
+    homepage = "https://github.com/treasure-data/embulk-filter-add_time"
+    licenses = [ "Apache-2.0" ]
+}
 
-  spec.add_development_dependency 'bundler', ['~> 1.0']
-  spec.add_development_dependency 'rake', ['>= 10.0']
-end
-/$)
+gemPush {
+    host = "https://rubygems.org"
+}
+
+test {
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
     }
 }
-clean { delete "${project.name}.gemspec" }
+
+checkstyle {
+    ignoreFailures = true
+    // @see https://github.com/facebook/presto/blob/master/src/checkstyle/checks.xml
+    //configFile = rootProject.file('./checkstyle.xml') // default {project.projectDir}/config/checkstyle/checkstyle.xml
+}
+
+tasks.withType(Pmd) {
+    ignoreFailures = true
+    reports.html.enabled true
+}
