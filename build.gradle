@@ -66,6 +66,25 @@ embulkPlugin {
     type = "add_time"
 }
 
+javadoc {
+    options {
+        locale = "en_US"
+        encoding = "UTF-8"
+    }
+}
+
+jar {
+    from rootProject.file("LICENSE")
+}
+
+sourcesJar {
+    from rootProject.file("LICENSE")
+}
+
+javadocJar {
+    from rootProject.file("LICENSE")
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
@@ -138,6 +157,10 @@ gem {
     summary = "Add time filter plugin for Embulk"
     homepage = "https://github.com/treasure-data/embulk-filter-add_time"
     licenses = [ "Apache-2.0" ]
+
+    from rootProject.file("LICENSE")
+    from rootProject.file("NOTICE_GEM")
+    rename ("NOTICE_GEM", "NOTICE")
 }
 
 gemPush {
