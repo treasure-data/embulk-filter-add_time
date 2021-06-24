@@ -1,6 +1,6 @@
 package org.embulk.filter.add_time.converter;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import org.embulk.config.ConfigException;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.PluginTask;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromColumnConfig;

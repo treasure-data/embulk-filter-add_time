@@ -1,33 +1,38 @@
 package org.embulk.filter.add_time.converter;
 
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.FromColumnConfig;
 import org.embulk.filter.add_time.AddTimeFilterPlugin.ToColumnConfig;
 import org.embulk.spi.Column;
 import org.embulk.spi.PageBuilder;
-import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.time.TimestampParser;
+import org.embulk.util.timestamp.TimestampFormatter;
 
 public class StringValueCastConverter
         extends ValueCastConverter
 {
-    private final TimestampParser fromTimestampParser;
+    private final TimestampFormatter fromTimestampFormatterForParsing;
 
     public StringValueCastConverter(FromColumnConfig fromColumnConfig, ToColumnConfig toColumnConfig)
     {
         super(toColumnConfig);
-        this.fromTimestampParser = new TimestampParser(fromColumnConfig, fromColumnConfig);
+        final String pattern = fromColumnConfig.getFormat().orElse(fromColumnConfig.getDefaultTimestampFormat());
+        this.fromTimestampFormatterForParsing = TimestampFormatter.builder(pattern, true)
+                        .setDefaultZoneFromString(fromColumnConfig.getTimeZoneId().orElse(fromColumnConfig.getDefaultTimeZoneId()))
+                        .setDefaultDateFromString(fromColumnConfig.getDate().orElse(fromColumnConfig.getDefaultDate()))
+                        .build();
     }
 
     @Override
     public void convertValue(final Column column, String value, final PageBuilder pageBuilder)
     {
-        columnVisitor.setValue(stringToTimestamp(value));
+        columnVisitor.setValue(stringToInstant(value));
         columnVisitor.setPageBuilder(pageBuilder);
         column.visit(columnVisitor);
     }
 
-    private Timestamp stringToTimestamp(String value)
+    private Instant stringToInstant(final String value)
     {
-        return fromTimestampParser.parse(value);
+        return this.fromTimestampFormatterForParsing.parse(value);
     }
 }
