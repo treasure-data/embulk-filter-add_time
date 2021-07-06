@@ -277,8 +277,12 @@ public class AddTimeFilterPlugin
         {
             this.log = log;
             this.schemaConverter = schemaConverter;
-            this.pageReader = Exec.getPageReader(inputSchema);
-            this.pageBuilder = Exec.getPageBuilder(Exec.getBufferAllocator(), outputSchema, output);
+
+            // TODO: Replace to commented code after dropping v0.9
+            this.pageReader = new PageReader(inputSchema);
+            this.pageBuilder = new PageBuilder(Exec.getBufferAllocator(), outputSchema, output);
+            // this.pageReader = Exec.getPageReader(inputSchema);
+            // this.pageBuilder = Exec.getPageBuilder(Exec.getBufferAllocator(), outputSchema, output);
         }
 
         @Override
