@@ -22,6 +22,7 @@ import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskSource;
 import org.embulk.filter.add_time.converter.SchemaConverter;
+import org.embulk.spi.BufferAllocator;
 import org.embulk.spi.Exec;
 import org.embulk.spi.FilterPlugin;
 import org.embulk.spi.Page;
@@ -277,8 +278,9 @@ public class AddTimeFilterPlugin
         {
             this.log = log;
             this.schemaConverter = schemaConverter;
-            this.pageReader = Exec.getPageReader(inputSchema);
-            this.pageBuilder = Exec.getPageBuilder(Exec.getBufferAllocator(), outputSchema, output);
+
+            this.pageReader = getPageReader(inputSchema);
+            this.pageBuilder = getPageBuilder(Exec.getBufferAllocator(), outputSchema, output);
         }
 
         @Override
@@ -303,6 +305,45 @@ public class AddTimeFilterPlugin
             pageBuilder.close();
         }
     }
+
+    @SuppressWarnings("deprecation")
+    private static PageBuilder getPageBuilder(final BufferAllocator bufferAllocator, final Schema schema, final PageOutput output) {
+        if (HAS_EXEC_GET_PAGE_BUILDER) {
+            return Exec.getPageBuilder(bufferAllocator, schema, output);
+        } else {
+            return new PageBuilder(bufferAllocator, schema, output);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static PageReader getPageReader(final Schema schema) {
+        if (HAS_EXEC_GET_PAGE_READER) {
+            return Exec.getPageReader(schema);
+        } else {
+            return new PageReader(schema);
+        }
+    }
+
+    private static boolean hasExecGetPageReader() {
+        try {
+            Exec.class.getMethod("getPageReader", Schema.class);
+        } catch (final NoSuchMethodException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean hasExecGetPageBuilder() {
+        try {
+            Exec.class.getMethod("getPageBuilder", BufferAllocator.class, Schema.class, PageOutput.class);
+        } catch (final NoSuchMethodException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    private static final boolean HAS_EXEC_GET_PAGE_READER = hasExecGetPageReader();
+    private static final boolean HAS_EXEC_GET_PAGE_BUILDER = hasExecGetPageBuilder();
 
     private static final Logger log = LoggerFactory.getLogger(AddTimeFilterPlugin.class);
 
