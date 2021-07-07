@@ -12,7 +12,7 @@ repositories {
 }
 
 group = "com.treasuredata.embulk.plugins"
-version = "0.3.1-SNAPSHOT"
+version = "0.3.1"
 description = "Add time column to the schema"
 
 sourceCompatibility = 1.8
