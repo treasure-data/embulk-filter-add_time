@@ -16,7 +16,7 @@ configurations {
 }
 
 version = "0.2.0"
-
+//
 compileJava.options.encoding = 'UTF-8' // source encoding
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
